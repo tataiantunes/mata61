@@ -10,3 +10,5 @@ http://dinosaur.compilertools.net/yacc/index.html
 http://www.ime.usp.br/~cpg/teses/Dissertacao-TassoTirapaniSPinto.pdf
 
 http://www.medina-web.com/programas/documents/tutoriales/lex_yacc/core/yacc.html - parecido
+
+https://www.google.com.br/url?sa=t&rct=j&q=&esrc=s&source=web&cd=4&cad=rja&uact=8&ved=0ahUKEwi8t8Wc0qHPAhWCIpAKHWc3DU0QFggxMAM&url=http%3A%2F%2Fwww.pedrofreire.com%2Ftutor%2Fcomp-guiao.pdf&usg=AFQjCNEX3cjXaKhx8R9vTgRdOu-V8_ztQw&sig2=m5xLw0iqMQNBNO5YYjq3Gg - guia para fazer um compilador
