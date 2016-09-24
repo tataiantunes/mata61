@@ -49,7 +49,8 @@ comando         : T_SEMICOL
                 | T_LOCAL listadenomes T_ASSIGN listaexp
                 ;
 
-elseifthen      : T_ELSEIF exp T_THEN bloco elseifthen 
+elseifthen      : T_ELSEIF exp T_THEN bloco elseifthen
+		;
 
 comandoret      : T_RETURN 
                 | T_RETURN listaexp
