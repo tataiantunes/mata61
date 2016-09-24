@@ -1,6 +1,6 @@
 %{
     /* Alunas: Andressa Andrade e Renata Antunes
-       Classes possÌveis para os tokens da linguagem:
+       Classes poss√≠veis para os tokens da linguagem:
        T_NAME, T_NUMBER,T_AND, T_NOT, T_OR, T_ELSEIF, T_WHILE, T_DO, T_FUNCTION,
        T_END, T_FOR, T_ELSE, T_IF, T_THEN, T_RETURN, T_LOCAL, T_NIL, T_PLUS, T_MINUS,
        T_TIMES, T_DIV, T_COMMA, T_OPENPAR, T_CLOSEPAR, T_SEMICOL, T_ASSIGN,T_EQ, T_NEQ,
@@ -9,107 +9,108 @@
     void yyerror (const char *str);
     #include <stdio.h>
     #include <stdlib.h>
+
+    extern int yylex();
+    extern char* yytext;
+    extern int yylineno;
+    extern FILE* yyout;
 %}
 
+/* Por default, o Bison j√° possui o tipo INT */
+%start program;
 
-%token T_OPENPAR 
-%token T_CLOSEPAR
-%token T_PLUS 
-%token T_MINUS
-%token T_TIMES 
-%token T_DIV 
-%token T_COMMA
-%token T_SEMICOL 
-%token T_ASSIGN
-%token T_EQ
-%token T_NEQ
-%token T_LTEQ
-%token T_GTEQ
-%token T_LT
-%token T_GT
-%token T_NUMBER
-%token T_AND 
-%token T_DO
-%token T_ELSE
-%token T_ELSEIF 
-%token T_END
-%token T_FOR
-%token T_FUNCTION
-%token T_IF
-%token T_LOCAL 
-%token T_NIL 
-%token T_NOT 
-%token T_OR 
-%token T_RETURN
-%token T_THEN 
-%token T_WHILE 
+%token T_OPENPAR T_CLOSEPAR T_COMMA T_SEMICOL T_ASSIGN T_NUMBER T_DO T_ELSE T_ELSEIF T_END T_FOR T_FUNCTION T_IF T_LOCAL T_NIL T_NOT T_RETURN T_THEN T_WHILE T_NAME
+%left  T_EQ T_NEQ T_LTEQ T_GTEQ T_LT T_GT
+%left  T_PLUS T_MINUS
+%left  T_TIMES T_DIV
+%left  T_AND T_OR
 
-/*YACC definitions 
-%union {int num; char id;} 
-%start line
-%token print
-%token exit_command
-%token <num> number
-%token <id> identifier
-%type <num> line exp term
-%type <id> assignment
-*/
+
+
 
 %%
 /* Sintaxe da Linguagem */
 
 program         : bloco
-bloco           : {comando} [comandoret]
-/*
-Note que algumas funcoes pre-definidas sao incluidas linguagem, em especial a 
-funcao que exibe uma expressao na tela seguido de uma quebra de linha (\n)
-*/
-line            : '\n'
-                : exp '\n'
-comando         : ';'
-                | listadenomes '=' listaexp
+                ;
+
+bloco           : comando bloco
+                | comandoret
+                ;
+
+comando         : T_SEMICOL
+                | listadenomes T_ASSIGN listaexp
                 | chamadadefuncao
-                | do blobo end
-                | while exp do bloco end
-                | for NOME '=' exp ',' exp [',' exp] do bloco end
-                | if exp then bloco {elseif exp then bloco} [else bloco] end 
-                | function NOME '(' [listadenomes] ')' bloco end
-                | local listadenomes ['=' listaexp] 
-comandoret      : return [listaexp] [';']
-exp             : NUMERO
-                | NOME
-                | nil
+                | T_DO bloco T_END
+                | T_WHILE exp T_DO bloco T_END
+                | T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO bloco T_END
+                | T_IF exp T_THEN bloco elseifthen T_ELSE bloco T_END
+                | T_FUNCTION T_NAME T_OPENPAR listadenomes T_CLOSEPAR bloco T_END
+                | T_LOCAL listadenomes T_ASSIGN listaexp
+                ;
+
+elseifthen      : T_ELSEIF exp T_THEN bloco elseifthen 
+
+comandoret      : T_RETURN 
+                | T_RETURN listaexp
+                | T_RETURN T_SEMICOL
+                | T_RETURN listaexp T_SEMICOL
+                ;
+
+exp             : T_NUMBER
+                | T_NAME
+                | T_NIL
                 | chamadadefuncao
-                | exp opbin exp 
+                | exp opbin exp //{ $$ = $1 opbin $3 }
                 | opunaria exp
-                | '(' exp ')'
-chamadadefuncao : NOME '(' [listaexp] ')'
-listadenomes    : NOME {',' NOME}
-listaexp        : exp {',' exp}
-opbin           : `+¥ 
-                | '-' 
-                | '*' 
-                | '/' 
-                | '<' 
-                | '<=' 
-                | '>' 
-                | '>=' 
-                | '==' 
-                | '~=' 
-                | and 
-                | or  
-opunaria        : '-'
-                | not
- 
+                | T_OPENPAR exp T_CLOSEPAR
+                ;
+
+chamadadefuncao : T_NAME T_OPENPAR T_CLOSEPAR
+                | T_NAME T_OPENPAR listaexp T_CLOSEPAR
+                ;
+
+listadenomes    : T_NAME virgulanomes
+                ;
+
+virgulanomes    : T_COMMA T_NAME virgulanomes
+                ;
+
+listaexp        : exp virgulaexp
+                ;
+
+virgulaexp      : T_COMMA exp virgulaexp 
+                ;
+
+opbin           : T_PLUS
+                | T_MINUS
+                | T_TIMES
+                | T_DIV
+                | T_LT
+                | T_LTEQ
+                | T_GT
+                | T_GTEQ
+                | T_EQ
+                | T_NEQ
+                | T_AND
+                | T_OR
+                ;
+
+opunaria        : T_MINUS
+                | T_NOT
+                ;
+
 
 %%
 
+/*
 int main (void) {
 
 	return yyparse ( );
-}
+}*/
 
 void yyerror(const char *str)
 {
         fprintf(stderr,"error: %s\n",str);
 }
+
