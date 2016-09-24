@@ -1,10 +1,12 @@
-# lexical analyser maker
+#parser analyser maker
+all: lex.yy.c y.tab.c
+	gcc -g lex.yy.c y.tab.c -o sintatico
 
-all:
+lex.yy.c: y.tab.c lexical.l
 	flex lexical.l
-	gcc lex.yy.c
-	#Altere *.lua e *.txt conforme sua necessidade
-	./a.out hello.lua saida.txt
 
-clean:
-	$(RM) saida.txt
+y.tab.c: sintatico.y
+	yacc -d sintatico.y
+
+clean: 
+	rm -f lex.yy.c y.tab.c y.tab.h sintatico
