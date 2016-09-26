@@ -6,129 +6,154 @@
        T_TIMES, T_DIV, T_COMMA, T_OPENPAR, T_CLOSEPAR, T_SEMICOL, T_ASSIGN,T_EQ, T_NEQ,
        T_LTEQ, T_GTEQ, T_LT, T_GT
     */
-    void yyerror (const char *str);
     #include <stdio.h>
     #include <stdlib.h>
 
+    //ParserTree
+    #define NOTHING -1
+    /* Define the Object Structure for a tree node to store
+   the compiled result */
+
+    struct treeNode
+    {
+        int  item;
+        int  nodeIdentifier;
+        struct treeNode *first;
+        struct treeNode *second;
+    };
+
+    typedef struct treeNode TREE_NODE;
+    typedef TREE_NODE       *BINARY_TREE;
+
+    /* define method templates for functions that build and use trees */
+    int evaluate(BINARY_TREE);
+    BINARY_TREE create_node(int,int,BINARY_TREE,BINARY_TREE);
+
+    void yyerror (const char *str);
     extern int yylex();
-    extern char* yytext;
     extern int yylineno;
-    extern FILE* yyout;
+    extern FILE *yyin;
+    extern FILE *yyout;
+
 %}
 
-/* Por default, o Bison já possui o tipo INT */
-
-%token T_OPENPAR
-%token T_CLOSEPAR
-%left  T_PLUS
-%left  T_MINUS
-%left  T_TIMES
-%left  T_DIV
-%token T_COMMA
-%token T_SEMICOL
-%token T_ASSIGN
-%left  T_EQ
-%left  T_NEQ
-%left  T_LTEQ
-%left  T_GTEQ
-%left  T_LT
-%left  T_GT
-%token T_NUMBER
-%left  T_AND
-%token T_DO
-%token T_ELSE
-%token T_ELSEIF
-%token T_END
-%token T_FOR
-%token T_FUNCTION
-%token T_IF
-%token T_LOCAL
-%token T_NIL
-%token T_NOT
-%left  T_OR
-%token T_RETURN
-%token T_THEN
-%token T_WHILE
-
 %start program;
+
+%token<iVal> T_OPENPAR T_CLOSEPAR T_COMMA T_SEMICOL T_ASSIGN T_NUMBER T_DO T_ELSE T_ELSEIF T_END T_FOR T_FUNCTION T_IF T_LOCAL T_NIL T_NOT T_RETURN T_THEN T_WHILE T_NAME
+%left<iVal>   T_LT T_GT T_EQ  T_NEQ T_LTEQ T_GTEQ 
+%left<iVal>   T_PLUS T_MINUS
+%left<iVal>   T_TIMES T_DIV
+%left<iVal>    T_AND T_OR
+
+%type<tVal>  program bloco comando elseifthen comandoret exp expbin termos chamadadefuncao listadenomes virgulanomes opbin opunaria listaexp
+ 
 
 %%
 /* Sintaxe da Linguagem */
 
 program         : bloco
+                { BINARY_TREE ParseTree; int result;
+                ParseTree = create_node(NOTHING,NOTHING,$1,NULL);
+                result = evaluate(ParseTree);
+                printf("value : %d\n", result);
+                }
                 ;
 
-bloco           : {comando}
-                |[comandoret]
-                ;
-
-/*
-Note que algumas funcoes pre-definidas sao incluidas linguagem, em especial a
-funcao que exibe uma expressao na tela seguido de uma quebra de linha (\n)
-*/
-
-line            : '\n'
-                | exp '\n'
+bloco           : 
+                | comando bloco 
+                | comandoret
                 ;
 
 comando         : T_SEMICOL
-                | listadenomes T_ASSIGN listaexp
-                | chamadadefuncao
-                | T_DO bloco T_END
-                | T_WHILE exp T_DO bloco T_END
-                | T_FOR T_NAME T_ASSIGN exp T_COMMA exp [T_COMMA exp] T_DO bloco T_END
-                | T_IF exp T_THEN bloco {elseif exp T_THEN bloco} [T_ELSE bloco] T_END
-                | T_FUNCTION T_NAME T_OPENPAR [listadenomes] T_CLOSEPAR bloco T_END
-                | T_LOCAL listadenomes [T_ASSIGN listaexp]
+		        | listadenomes T_ASSIGN listaexp
+		        | chamadadefuncao
+		        | T_DO bloco T_END
+		        | T_WHILE exp T_DO bloco T_END
+		        | T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO bloco T_END
+		        | T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO bloco T_END
+		        | T_IF exp T_THEN bloco elseifthen  T_END
+		        | T_IF exp T_THEN bloco elseifthen  T_ELSE bloco T_END
+		        | T_FUNCTION T_NAME T_OPENPAR T_CLOSEPAR bloco T_END T_LOCAL listadenomes
+		        | T_FUNCTION T_NAME T_OPENPAR listadenomes T_CLOSEPAR bloco T_END T_LOCAL listadenomes
+		        | T_FUNCTION T_NAME T_OPENPAR T_CLOSEPAR bloco T_END T_LOCAL listadenomes T_ASSIGN listaexp
+		        | T_FUNCTION T_NAME T_OPENPAR listadenomes T_CLOSEPAR bloco T_END T_LOCAL listadenomes T_ASSIGN listaexp
+		        ;
+
+elseifthen      : 
+                | T_ELSEIF exp T_THEN bloco elseifthen
                 ;
 
-comandoret      : T_RETURN [listaexp] [T_SEMICOL]
+comandoret      : T_RETURN 
+                | T_RETURN listaexp
+                | T_RETURN T_SEMICOL
+                | T_RETURN listaexp T_SEMICOL
                 ;
 
-exp             : T_NUMBER
-                | T_NAME
+exp             : expbin termos                          
+                | opunaria exp                  
+                | T_OPENPAR exp T_CLOSEPAR     
+                ;
+
+expbin          : 
+                | expbin termos opbin { $$ = create_node(NOTHING,opbin,$1,$3); }
+                ;
+
+termos          : T_NUMBER { $$ = create_node($1,NUMBER,NULL,NULL); }
+                | T_NAME 
                 | T_NIL
                 | chamadadefuncao
-                | exp opbin exp { $$ = $1 opbin $3; }
-                | opunaria exp
-                | T_OPENPAR exp T_CLOSEPAR
                 ;
 
-chamadadefuncao : T_NAME T_OPENPAR [listaexp] T_CLOSEPAR
+chamadadefuncao : T_NAME T_OPENPAR T_CLOSEPAR
+                | T_NAME T_OPENPAR listaexp T_CLOSEPAR
                 ;
 
-listadenomes    : T_NAME {T_COMMA T_NAME}
+listadenomes    : T_NAME virgulanomes
                 ;
 
-listaexp        : exp {T_COMMA exp}
+virgulanomes    : 
+                | T_COMMA T_NAME virgulanomes
                 ;
 
-opbin           : T_PLUS
-                | T_MINUS
-                | T_TIMES
-                | T_DIV
-                | T_LT
-                | T_LTEQ
-                | T_GT
-                | T_GTEQ
-                | T_EQ
-                | T_NEQ
-                | T_AND
-                | T_OR
+listaexp        : exp virgulaexp { $$ = create_node(NOTHING,EXPR,$1,NULL); }
+                ;
+
+virgulaexp      : 
+                | T_COMMA exp virgulaexp 
+                ;
+
+opbin           : T_PLUS  { $$ = create_node($1,T_PLUS,NULL,NULL); }
+                | T_MINUS { $$ = create_node($1,T_MINUS,NULL,NULL); }
+                | T_TIMES { $$ = create_node($1,T_TIMES,NULL,NULL); }
+                | T_DIV   { $$ = create_node($1,T_DIV,NULL,NULL); }
+                | T_LT    { $$ = create_node($1,T_LT,NULL,NULL); }
+                | T_LTEQ  { $$ = create_node($1,T_LTEQ,NULL,NULL); }
+                | T_GT    { $$ = create_node($1,T_GT,NULL,NULL); }
+                | T_GTEQ  { $$ = create_node($1,T_GTEQ,NULL,NULL); }
+                | T_EQ    { $$ = create_node($1,T_EQ,NULL,NULL); }
+                | T_NEQ   { $$ = create_node($1,T_NEQ,NULL,NULL); }
+                | T_AND   { $$ = create_node($1,T_AND,NULL,NULL); }
+                | T_OR    { $$ = create_node($1,T_OR,NULL,NULL); }
                 ;
 
 opunaria        : T_MINUS
                 | T_NOT
                 ;
 
+
 %%
 
+/*
 int main (void) {
 
 	return yyparse ( );
-}
+   
+}*/
+
+
 
 void yyerror(const char *str)
 {
         fprintf(stderr,"error: %s\n",str);
 }
+
