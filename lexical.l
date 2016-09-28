@@ -5,12 +5,12 @@
     T_END, T_FOR, T_ELSE, T_IF, T_THEN, T_RETURN, T_LOCAL, T_NIL, T_PLUS, T_MINUS,
     T_TIMES, T_DIV, T_COMMA, T_OPENPAR, T_CLOSEPAR, T_SEMICOL, T_ASSIGN,T_EQ, T_NEQ,
     T_LTEQ, T_GTEQ, T_LT, T_GT */
-    #include <stdio.h>
+    #include <ctype.h>
     #include <stdlib.h>
-%}
+    #include <string.h>
+    #include "y.tab.h"
 
-%option yylineno
-%option noyywrap
+%}
 
 comment      --(.)*
 multicomment (--\[\[--)(\n*|.*)*(--\]\]--)
@@ -23,74 +23,119 @@ number {digit}+
 
 %%
 
-{multicomment}          {}
-{comment}               {}
-{number}                {fprintf(yyout, "[T_NUMBER, \"%s\"],\n", yytext);}
-"and"                   {fprintf(yyout, "[T_AND, \"%s\"],\n", yytext);}
-"not"                   {fprintf(yyout, "[T_NOT, \"%s\"],\n", yytext);}
-"or"                    {fprintf(yyout, "[T_OR, \"%s\"],\n", yytext);}
-"elseif"                {fprintf(yyout, "[T_ELSEIF, \"%s\"],\n", yytext);}
-"while"                 {fprintf(yyout, "[T_WHILE, \"%s\"],\n", yytext);}
-"do"                    {fprintf(yyout, "[T_DO, \"%s\"],\n", yytext);}
-"function"              {fprintf(yyout, "[T_FUNCTION, \"%s\"],\n", yytext);}
-"end"                   {fprintf(yyout, "[T_END, \"%s\"],\n", yytext);}
-"for"                   {fprintf(yyout, "[T_FOR, \"%s\"],\n", yytext);}
-"else"                  {fprintf(yyout, "[T_ELSE, \"%s\"],\n", yytext);}
-"if"                    {fprintf(yyout, "[T_IF, \"%s\"],\n", yytext);}
-"then"                  {fprintf(yyout, "[T_THEN, \"%s\"],\n", yytext);}
-"return"                {fprintf(yyout, "[T_RETURN, \"%s\"],\n", yytext);}
-"local"                 {fprintf(yyout, "[T_LOCAL, \"%s\"],\n", yytext);}
-"nil"                   {fprintf(yyout, "[T_NIL, \"%s\"],\n", yytext);}
-{name}                  {fprintf(yyout, "[T_NAME, \"%s\"],\n", yytext);}
-{ws}                    {}
-"=="          {fprintf(yyout, "[T_EQ, \"%s\"],\n", yytext);}
-"~="          {fprintf(yyout, "[T_NEQ, \"%s\"],\n", yytext);} 
-"<="          {fprintf(yyout, "[T_LTEQ, \"%s\"],\n", yytext);}
-">="          {fprintf(yyout, "[T_GTEQ, \"%s\"],\n", yytext);}
-[=]           {fprintf(yyout, "[T_ASSIGN, \"%s\"],\n", yytext);}
-[<]           {fprintf(yyout, "[T_LT, \"%s\"],\n", yytext);}
-[>]           {fprintf(yyout, "[T_GT, \"%s\"],\n", yytext);}
-[-]           {fprintf(yyout, "[T_MINUS, \"%s\"],\n", yytext);}
-[*]           {fprintf(yyout, "[T_TIMES, \"%s\"],\n", yytext);}
-[/]           {fprintf(yyout, "[T_DIV, \"%s\"],\n", yytext);}
-[,]           {fprintf(yyout, "[T_COMMA, \"%s\"],\n", yytext);}
-[+]           {fprintf(yyout, "[T_PLUS, \"%s\"],\n", yytext);}
-[(]           {fprintf(yyout, "[T_OPENPAR, \"%s\"],\n", yytext);}
-[)]           {fprintf(yyout, "[T_CLOSEPAR, \"%s\"],\n", yytext);}
-[;]           {fprintf(yyout, "[T_SEMICOL, \"%s\"],\n", yytext);}
+{multicomment}          
+{comment}               
+{number}                { 
+                          yylval.ival = atoi(yytext);
+                          return T_NUMBER;
+                        }
+"and"                   { strcpy(yylval.sval, yytext);
+                          return T_AND;
+                        }
+"not"                   { strcpy(yylval.sval, yytext);
+                          return T_NOT;
+                        }
+"or"                    { strcpy(yylval.sval, yytext);
+                          return T_OR;
+                        }
+"elseif"                { strcpy(yylval.sval, yytext);
+                          return T_ELSEIF;
+                        }
+"while"                 { strcpy(yylval.sval, yytext);
+                          return T_WHILE;
+                        }
+"do"                    { strcpy(yylval.sval, yytext);
+                          return T_DO;
+                        }
+"function"              { strcpy(yylval.sval, yytext);
+                          return T_FUNCTION;
+                        }
+"end"                   { strcpy(yylval.sval, yytext);
+                          return T_END;
+                        }
+"for"                   { strcpy(yylval.sval, yytext);
+                          return T_FOR;
+                        }
+"else"                  { strcpy(yylval.sval, yytext);
+                          return T_ELSE;
+                        }
+"if"                    { strcpy(yylval.sval, yytext);
+                          return T_IF;
+                        }
+"then"                  { strcpy(yylval.sval, yytext);
+                          return T_THEN;
+                        }
+"return"                { strcpy(yylval.sval, yytext);
+                          return T_NUMBER;
+                        }
+"local"                 { strcpy(yylval.sval, yytext);
+                          return T_NUMBER;
+                        }
+"nil"                   { strcpy(yylval.sval, yytext);
+                          return T_NUMBER;
+                        }
+{name}                  { strcpy(yylval.sval, yytext);
+                          return T_NAME;
+                        }
+{ws}                    
+"=="          { strcpy(yylval.sval, yytext);
+                          return T_EQ;
+                        }
+"~="          { strcpy(yylval.sval, yytext);
+                          return T_NEQ;
+                        }
+"<="          { strcpy(yylval.sval, yytext);
+                          return T_LTEQ;
+                        }
+">="          { strcpy(yylval.sval, yytext);
+                          return T_GTEQ;
+                        }
+[=]           { strcpy(yylval.sval, yytext);
+                          return T_ASSIGN;
+                        }
+[<]           { strcpy(yylval.sval, yytext);
+                          return T_LT;
+                        }
+[>]           { strcpy(yylval.sval, yytext);
+                          return T_GT;
+                        }
+[-]           { strcpy(yylval.sval, yytext);
+                          return T_MINUS;
+                        }
+[*]           { strcpy(yylval.sval, yytext);
+                          return T_TIMES;
+                        }
+[/]           { strcpy(yylval.sval, yytext);
+                          return T_DIV;
+                        }
+[,]           { strcpy(yylval.sval, yytext);
+                          return T_COMMA;
+                        }
+[+]           { strcpy(yylval.sval, yytext);
+                          return T_PLUS;
+                        }
+[(]           { strcpy(yylval.sval, yytext);
+                          return T_OPENPAR;
+                        }
+[)]           { strcpy(yylval.sval, yytext);
+                          return T_CLOSEPAR;
+                        }
+[;]           { strcpy(yylval.sval, yytext);
+                          return T_SEMICOL;
+                        }
 
-.             {printf("<%s>: Not defined, Line: %u\n",yytext, yylineno);}
+.             //{printf("<%s>: Not defined\n",yytext);}
 
 %%
 
-main(int argc, char *argv[]){
-       
-    extern FILE *yyin;
-    extern FILE *yyout;
 
-    if (argc > 3){
-        printf("O programa deve receber os argumentos...\n");
-        exit(1);
-    }
-    else{
+int main(void) {
+    yyparse();
+}
 
-        yyin = fopen (argv[1], "r");
-        if (!yyin){
-            puts ("Não foi possivel abrir o arquivo de entrada\n");
-            exit(1);
-            }else{
-            yyout = fopen(argv[2], "w");
-            if (!yyout){
-                puts ("Não foi possivel criar o arquivo de saida\n");
-                exit(1);
-            }else{
-                while(yylex()){
-                
-                }
-            }
-            fclose(yyout);
-            }
-            fclose(yyin);
-    }
-    return 0;
- }
+
+
+void yyerror(const char *str)
+{
+        printf("\n\nerror: %s\n",str);
+}

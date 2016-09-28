@@ -1,10 +1,10 @@
-# lexical analyser maker
+#parser analyser maker
+all: yacc -d sint_mud.y
+	 flex lexical.l
+	 gcc -g lex.yy.c y.tab.c -o compilador
 
-all:
-	flex lexical.l
-	gcc lex.yy.c
-	#Altere *.lua e *.txt conforme sua necessidade
-	./a.out hello.lua saida.txt
+#Rode a entrada usando ./compilador < arquivoentrada
+#Saida no terminal
 
-clean:
-	$(RM) saida.txt
+clean: 
+	rm -f lex.yy.c y.tab.c y.tab.h compilador
